@@ -1,0 +1,9 @@
+https://ccrma.stanford.edu/~jos/filters/What_Filter.html
+K. K. Parhi, VLSI Digital Signal Processing Systems: Design and Implementation, John Wiley, 1999
+https://www.allaboutcircuits.com/technical-articles/an-introduction-to-digital-signal-processing/
+Introductory Signal Processing - Roland Priemer
+https://www.nti-audio.com/en/support/know-how/fast-fourier-transform-fft
+https://cs.wmich.edu/gupta/teaching/cs5260/5260Sp15web/studentProjects/tiba&hussein/03278999.pdf
+The Scientist and Engineer's Guide to Digital Signal Processing By Steven W. Smith, Ph.D.
+http://www.ti.com/lit/an/spra104/spra104.pdf
+http://www.analog.com/en/design-center/landing-pages/001/beginners-guide-to-dsp.html

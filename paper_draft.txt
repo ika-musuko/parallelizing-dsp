@@ -1,0 +1,21 @@
+Parallelizing Digital Signal Processing
+
+Abstract
+---------
+    Classical computing systems are sequential in nature, whether it be hardware or software; that is each task is instructed in sequence, one at a time. This is due to when we construct and describe algorithms or formulas, we often think of them in this sequential fashion. However, we as we reach the end of Moore's Law, individual computing units themselves are reaching their maximum potential. The obvious solution to this is run multiple computing units in parallel to accomplish tasks. This is how the field of parallel processing was birthed. However, with this solution arises a whole new field of problems, that is, sequential algorithms must be properly restructured to work in a parallel environment.
+    One large field which has obvious benefits from utilizing parallel processing is digital signal processing. Digital signal processing is simply, taking a stream of data, performing some operations on the data, and outputting the modified data stream. Digital signal processing algorithms are computationally expensive, however they are inherently suited to task partitioning, a key indicator of whether something is parallelizable. If DSP algorithms are parallelized, this can reduce individual CPU load while getting the same results as normal sequential algorithms. 
+    This paper will talk about parallelizing DSP hardware, and selected demonstrations of how software DSP algorithms can be parallelized. The mathematics and derivations of the DSP algorithms discussed, while critical to the study of DSP overall, will only be explained in brief as the focus of this paper is how these algorithms can be parallelized and what kind of efficiency increases are gained from parallelizing them.
+
+What is Digital Signal Processing?
+---------
+    Since the targeted audience of this paper is software engineers and computer programmers as opposed to electrical engineers, what digital signal processing is and some of its applications will be discussed before diving into its parallelization. As mentioned in the abstract, digital signal processing at its most basic form is taking a stream of data, modifying it in some way, and outputting the modified stream.
+    But what exactly is a signal? A signal in theoretical terms is a function which conveys information about a system. Signals exist all around us in nature. Commonly known signals are motion, sound, and images, however more esoteric signals would be biological membrane potentials or medical signals. This paper will use audio signals as a reference point since they are the easiest to conceptualize according to the author.
+    A digital signal processor takes a digitized signal and performs various mathematical operations on the signal to modify it in some way. Signals can be digitized using an "ADC unit", an analog to digital converting unit. Output of a DSP-processed signal is done via a "DAC unit", a digital to analog converting unit.
+
+Why parallelize DSP?
+---------
+    At its heart, DSP is essentially mathematical operations, which makes it an ideal candidate to think about how many DSP operations can be parallelized. Many common DSP operations are suited for task partitioning so they are relatively easy to parallelize in both hardware and software. A system running DSP operations in parallel can do so with a reduced clock speed, or run more DSP operations at the same clock speed as it would sequentially, resulting in increased data throughput. These days, parallel programming paradigms have been well established so it is much easier to experiment with ways to parallelize common DSP operations, which will be discussed in this paper.
+
+Hardware DSP parallelization
+---------
+

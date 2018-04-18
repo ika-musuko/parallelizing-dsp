@@ -1,0 +1,66 @@
+- what is dsp
+    - digital signal processing
+    - signal
+        - function conveying information about a system
+        - this paper, focusing on audio information although electromagnetic, sonar, image information can also be expressed as signals
+    - digital signal
+        - essentially a stream of data
+    - dsp is the field where modifying signals is studied
+        - essentially taking a signal, modifying it in some way, and outputting that modified signal
+        - we will focus on taking existing dsp algorithms and talking about how to parallelize them (as opposed to discussing the mathematics of dsp)
+
+- why parallelize dsp?
+    - DSP operations are computationally expensive
+    - however inherently suited to task partitioning and therefore easy to parallelize
+        - hardware
+        - software
+    - parallel DSP
+        - reduce clock speed of hardware for same level 
+        - increase clock speed and perform more DSP operations
+        - increased data throughput
+
+- parallel DSP at the hardware level
+    - 
+
+-> study: software DSP parallelization
+- FFT - can it be parallelized?
+    - what is FFT
+        - fast fourier transform
+        - samples a signal and divides it into frequency components
+        - formula
+        - algorithm efficiency = O(n log n)
+    - performing FFT on a signal (sequential) (numpy.fft)
+        - divide finer and finer and finer
+        - eventual lag
+    - parallelizing FFT
+        - do each frequency in parallel
+        - divide finer and finer
+        - lag point later
+
+- filtering - can it be parallelized?
+    - what is filtering
+        - technically, a filter is any medium through which an audio signal passes
+        - typically in audio engineering, equalizers and pass filters are used
+            - analysis of a waveform done via FFT
+        - can be done in hardware using special circuits or via software calculations
+        - this demonstration: a software low-pass filter
+    - standard low-pass filter
+        - time to apply filter on signal sequentially
+    - parallel
+
+
+
+
+
+- time stretching - can it be parallelized?
+
+
+- echo/reverb - can it be parallelized?
+
+
+
+- compressor - can it be parallelized
+
+
+
+- conclusion
