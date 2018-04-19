@@ -9,3 +9,4 @@ http://www.ti.com/lit/an/spra104/spra104.pdf
 http://www.analog.com/en/design-center/landing-pages/001/beginners-guide-to-dsp.html
 https://www.ritchievink.com/blog/2017/04/23/understanding-the-fourier-transform-by-example/
 http://samcarcagno.altervista.org/blog/basic-sound-processing-python/
+http://people.csail.mit.edu/hubert/pyaudio/docs/

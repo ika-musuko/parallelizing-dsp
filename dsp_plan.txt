@@ -23,13 +23,20 @@
     - 
 
 -> study: software DSP parallelization
+- realtime signal processing
+    - in its most basic terms, analyzing a signal through a visual medium requires buffering a small piece of the signal, applying a DSP to that piece, and outputting the result of that piece
+    - audio frequency visualization -> requires FFT
+
 - FFT - can it be parallelized?
     - what is FFT
         - fast fourier transform
         - samples a signal and divides it into frequency components
-        - formula
-        - algorithm efficiency = O(n log n)
-    - performing FFT on a signal (sequential) (numpy.fft)
+        - fourier transform
+            - takes a signal, wraps it around a circle
+            - function is the "center of mass of the circle"
+            - formula
+
+    - performing FFT on a signal (sequential)
         - divide finer and finer and finer
         - eventual lag
     - parallelizing FFT
