@@ -1,10 +1,17 @@
 '''
-makes heavy use of https://github.com/markjay4k/Audio-Spectrum-Analyzer-in-Python/blob/master/audio_spectrum.py
+base visualizer from https://github.com/markjay4k/Audio-Spectrum-Analyzer-in-Python/blob/master/audio_spectrum.py
+
+but i fixed the math and made the visualizer real time
 '''
 
+from matplotlib.ticker import ScalarFormatter
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from matplotlib import gridspec
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
+
+
 import pyaudio
 import time
 import wave
@@ -17,7 +24,7 @@ FPS = 30
 
 class SoundcardAnalyzer():
     '''
-    epic hack where i record the output from the computer's audio device instead of from the wave file LOL
+    epic hack where i record the output from the computer's audio card instead of from the wave file LOL
     '''
     def __init__(self, fft_func):
         # fft function to be used
@@ -44,46 +51,67 @@ class SoundcardAnalyzer():
         self.init_plotter()
 
     def init_plotter(self):
-
+        
         
         # x variables for plotting
         x = np.arange(0, 2 * self.CHUNK, 2)
         xf = np.linspace(0, self.RATE, self.CHUNK)
 
         # create matplotlib figure and axes
-        self.fig, (ax1, ax2) = plt.subplots(2, figsize=(15, 7))
+        self.fig = plt.figure(figsize=(8, 7))
+        gs = gridspec.GridSpec(nrows=2, ncols=1, height_ratios=[1, 3])
+        ax1 = plt.subplot(gs[0])
+        ax2 = plt.subplot(gs[1])
         #self.fig.canvas.mpl_connect('button_press_event', self.onClick)
 
         # create a line object with random data
-        self.line, = ax1.plot(x, np.random.rand(self.CHUNK), '-', lw=2)
+        self.line, = ax1.plot(x, np.random.rand(self.CHUNK), 'g', lw=2, animated=True)
 
         # create semilogx line for spectrum
-        self.line_fft, = ax2.semilogx(xf, np.random.rand(self.CHUNK), '-', lw=2)
+        self.line_fft, = ax2.plot(xf, np.random.rand(self.CHUNK), '-', lw=2, animated=True)
+        ax2.set_xscale("symlog")
 
         # format waveform axes
-        ax1.set_title('AUDIO WAVEFORM')
         ax1.set_xlabel('samples')
         ax1.set_ylabel('volume')
         ax1.set_ylim(-2**15, 2**15)
-        ax1.set_xlim(0, 2 * self.CHUNK)
+        ax1.set_xlim(20, 2 * self.CHUNK)
         plt.setp(
             ax1, yticks=[-2**15, 0 , 2**15],
             xticks=[0, self.CHUNK, 2 * self.CHUNK],
         )
-        plt.setp(ax2, yticks=[0, 2**24 + 2**23],)
+        plt.setp(ax2, yticks=[0, 2**23],)
 
         # format spectrum axes
-        ax2.set_xlim(20, 32000)
-        ax2.set_ylim(0, 2**24 + 2**23)
+        ax2.set_xlim(40, 2 * self.CHUNK)
+        ax2.set_ylim(0, 2**23)
+        ax2.set_xlabel('frequency (Hz)')
+        ax2.set_ylabel('energy')
+        ax2.set_xticks([j for i in [[5*10**i, 1*10**(i+1), 2*10**(i+1)] for i in range(1, 4)] for j in i])
+        for axis in [ax2.xaxis, ax2.yaxis]:
+            axis.set_major_formatter(ScalarFormatter())
 
         # show axes
         #thismanager = plt.get_current_fig_manager()
         #thismanager.window.setGeometry(5, 120, 1910, 1070)
-        plt.show(block=False)
+        
+        print("making animation")
+        ani = animation.FuncAnimation(
+                self.fig, self._animate, None,
+                init_func=self._line_init, 
+                interval=1000.0 / FPS, blit=True
+                )
+        
+        print("show")
+        plt.show()
 
+    
+    def _line_init(self):
+        self.line.set_ydata(np.zeros(self.CHUNK))
+        self.line_fft.set_ydata(np.zeros(self.CHUNK))
+        return self.line, self.line_fft
 
-
-    def plot(self):
+    def _animate(self, frame):
         data = self.stream.read(self.CHUNK)
         data_np = np.frombuffer(data, dtype='Int16')
 
@@ -95,11 +123,7 @@ class SoundcardAnalyzer():
         self.line_fft.set_ydata(
             np.abs(yf[0:self.CHUNK]))
 
-
-        # update figure canvas
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-
+        return self.line, self.line_fft
 
 
 class WavePlayer():
@@ -190,16 +214,10 @@ if __name__ == "__main__":
         wp.play_loop()
 
     def plot_loop():
-        sa = SoundcardAnalyzer(fft_func=np.fft.fft)
-        last_update = time.clock()
-        while True:
-            sa.plot()
-            #how_long = time.clock()-last_update
-            #time.sleep(max(1.0/FPS - how_long, 0))
-            #last_update = time.clock()
+        SoundcardAnalyzer(fft_func=np.fft.fft)
     
     play_proc = mp.Process(target=play_loop)
     plot_proc = mp.Process(target=plot_loop)
 
-    play_proc.start()
     plot_proc.start()
+    play_proc.start()
