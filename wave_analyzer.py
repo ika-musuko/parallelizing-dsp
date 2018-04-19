@@ -14,66 +14,14 @@ import struct
 import multiprocessing as mp
 
 
-class WaveAnalyzer:
-    def __init__(self, wave_file: str, fft_func, analyze=True):
-       
+class SoundcardAnalyzer():
+    '''
+    epic hack where i record the output from the computer's audio device instead of from the wave file LOL
+    '''
+    def __init__(self, fft_func):
         # fft function to be used
         self.fft = fft_func
 
-        # settings
-        self.CHUNK = 1024
-        self.FORMAT = pyaudio.paInt16
-        self.CHANNELS = 1
-        self.RATE = 44100
-        self.analyze = analyze
-        
-        # load wave
-        self.wave_filename = wave_file
-        self.load()
-
-        # init plotter
-        if self.analyze:
-            self.init_plotter()
-
-    def load(self):
-        self.wf = wave.open(self.wave_filename, 'rb')
-
-        # instantiate PyAudio (1)
-        self.pa = pyaudio.PyAudio()
-
-        # callback function (non blocking)
-        def _pa_callback(in_data, frame_count, time_info, status):
-            self.data = self.wf.readframes(frame_count)
-            return (self.data, pyaudio.paContinue)
-        
-        
-        # open stream (2)
-        self.stream = self.pa.open(
-                  format=self.pa.get_format_from_width(self.wf.getsampwidth())
-                , channels=self.wf.getnchannels()
-                , rate=self.wf.getframerate()
-                , output=True
-                #, stream_callback = _pa_callback
-                )
-    
-        self.data = self.wf.readframes(self.CHUNK)
-
-    def play(self):
-        # play stream (3)
-        '''
-        self.stream.start_stream()
-        while self.stream.is_active():
-            time.sleep(0.1)
-        '''
-        while len(self.data) > 0:
-            print(len(self.data))
-            self.stream.write(self.data)
-            if self.analyze:
-                self.plot()
-            self.data = self.wf.readframes(self.CHUNK)
-        
-
-        
     def init_plotter(self):
         
         # x variables for plotting
@@ -129,35 +77,98 @@ class WaveAnalyzer:
         self.fig.canvas.flush_events()
 
 
+class WavePlayer():
+    def __init__(self, wave_file: str):
+       
+        # status
+        self.playing = False
+
+        # settings
+        self.CHUNK = 1024
+        self.FORMAT = pyaudio.paInt16
+        self.CHANNELS = 1
+        self.RATE = 44100
+        
+        # load wave
+        self.wave_filename = wave_file
+        self.load()
+
+    def load(self):
+        print("load")
+        self.wf = wave.open(self.wave_filename, 'rb')
+
+        # instantiate PyAudio (1)
+        self.pa = pyaudio.PyAudio()
+
+        # callback function (non blocking)
+        def _pa_callback(in_data, frame_count, time_info, status):
+            self.data = self.wf.readframes(frame_count)
+            callback_flag = pyaudio.paContinue if self.playing else pyaudio.paComplete
+            signal = (self.data, callback_flag)
+            #print(signal)
+            return signal
+        
+        # open stream (2)
+        self.stream = self.pa.open(
+                  format=self.pa.get_format_from_width(self.wf.getsampwidth())
+                , channels=self.wf.getnchannels()
+                , rate=self.wf.getframerate()
+                , output=True
+                , stream_callback = _pa_callback
+                )
+    
+        self.data = self.wf.readframes(self.CHUNK)
+
+    def play(self):
+        # play stream (3)
+        print("play")
+        self._start_stream()
+        while self.stream.is_active():
+            time.sleep(0.1)
+
+        '''
+        while len(self.data) > 0:
+            self.stream.write(self.data)
+            self.data = self.wf.readframes(self.CHUNK)
+        '''
 
     def cleanup(self):
+        print("cleanup")
         # stop stream (4)
-        self.stream.stop_stream()
+        self._stop_stream()
         self.stream.close()
 
         # close PyAudio (5)
         self.pa.terminate()
 
+    def stop(self):
+        self._stop_stream()
+    
+    def _start_stream(self):
+        self.playing = True
+        self.stream.start_stream()
+
+    def _stop_stream(self):
+        self.playing = False
+        self.stream.stop_stream()
+
+    def play_loop(self):
+        while True:
+            self.play()
+            self.stop()
+            self.load()
 
 
 if __name__ == "__main__":
-    wa = WaveAnalyzer(wave_file=sys.argv[1], fft_func=np.fft.fft, analyze=True)
-    def play_loop():
-        while True:
-            wa.play()
-            wa.cleanup()
-            wa.load()
+    def play_loop(): 
+        wp = WavePlayer(wave_file=sys.argv[1])
+        wp.play_loop()
 
     def plot_loop():
-        while True:
-            wa.plot()
-
-    play_loop()
+        pass
     
-    '''
     play_proc = mp.Process(target=play_loop)
-    plot_proc = mp.Process(target=plot_loop)
+    #plot_proc = mp.Process(target=plot_loop)
 
     play_proc.start()
-    plot_proc.start()
-    '''
+    #plot_proc.start()
