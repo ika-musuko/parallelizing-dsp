@@ -13,6 +13,7 @@ import numpy as np
 import struct
 import multiprocessing as mp
 
+FPS = 30
 
 class SoundcardAnalyzer():
     '''
@@ -22,7 +23,28 @@ class SoundcardAnalyzer():
         # fft function to be used
         self.fft = fft_func
 
+        # settings
+        self.CHUNK = 1024 * 2
+        self.FORMAT = pyaudio.paInt16
+        self.CHANNELS = 1
+        self.RATE = 44100
+
+        # get soundcard
+        self.pa = pyaudio.PyAudio()
+        self.stream = self.pa.open(
+                  format=self.FORMAT
+                , channels=self.CHANNELS
+                , rate=self.RATE
+                , input=True
+                , output=True
+                , frames_per_buffer=self.CHUNK
+                )
+
+        # plotter
+        self.init_plotter()
+
     def init_plotter(self):
+
         
         # x variables for plotting
         x = np.arange(0, 2 * self.CHUNK, 2)
@@ -36,23 +58,23 @@ class SoundcardAnalyzer():
         self.line, = ax1.plot(x, np.random.rand(self.CHUNK), '-', lw=2)
 
         # create semilogx line for spectrum
-        self.line_fft, = ax2.semilogx(
-            xf, np.random.rand(self.CHUNK), '-', lw=2)
+        self.line_fft, = ax2.semilogx(xf, np.random.rand(self.CHUNK), '-', lw=2)
 
         # format waveform axes
         ax1.set_title('AUDIO WAVEFORM')
         ax1.set_xlabel('samples')
         ax1.set_ylabel('volume')
-        ax1.set_ylim(0, 255)
+        ax1.set_ylim(-2**15, 2**15)
         ax1.set_xlim(0, 2 * self.CHUNK)
         plt.setp(
-            ax1, yticks=[0, 128, 255],
+            ax1, yticks=[-2**15, 0 , 2**15],
             xticks=[0, self.CHUNK, 2 * self.CHUNK],
         )
-        plt.setp(ax2, yticks=[0, 1],)
+        plt.setp(ax2, yticks=[0, 2**24 + 2**23],)
 
         # format spectrum axes
-        ax2.set_xlim(20, self.RATE / 2)
+        ax2.set_xlim(20, 32000)
+        ax2.set_ylim(0, 2**24 + 2**23)
 
         # show axes
         #thismanager = plt.get_current_fig_manager()
@@ -62,19 +84,22 @@ class SoundcardAnalyzer():
 
 
     def plot(self):
-        data_int = struct.unpack(str(2 * self.CHUNK) + 'B', self.data)
-        data_np = np.array(data_int, dtype='b')[::2] + 128
+        data = self.stream.read(self.CHUNK)
+        data_np = np.frombuffer(data, dtype='Int16')
 
+        #print(data_np)
         self.line.set_ydata(data_np)
 
         # compute FFT and update line
-        yf = self.fft(data_int)
+        yf = self.fft(data_np)
         self.line_fft.set_ydata(
-            np.abs(yf[0:self.CHUNK]) / (128 * self.CHUNK))
+            np.abs(yf[0:self.CHUNK]))
+
 
         # update figure canvas
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+
 
 
 class WavePlayer():
@@ -165,10 +190,16 @@ if __name__ == "__main__":
         wp.play_loop()
 
     def plot_loop():
-        pass
+        sa = SoundcardAnalyzer(fft_func=np.fft.fft)
+        last_update = time.clock()
+        while True:
+            sa.plot()
+            #how_long = time.clock()-last_update
+            #time.sleep(max(1.0/FPS - how_long, 0))
+            #last_update = time.clock()
     
     play_proc = mp.Process(target=play_loop)
-    #plot_proc = mp.Process(target=plot_loop)
+    plot_proc = mp.Process(target=plot_loop)
 
     play_proc.start()
-    #plot_proc.start()
+    plot_proc.start()
