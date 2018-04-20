@@ -51,8 +51,9 @@ class SoundcardAnalyzer():
         self.init_plotter()
 
     def init_plotter(self):
-        
-        
+        '''
+            initialize the plotter
+        '''
         # x variables for plotting
         x = np.arange(0, 2 * self.CHUNK, 2)
         xf = np.linspace(0, self.RATE, self.CHUNK)
@@ -62,12 +63,11 @@ class SoundcardAnalyzer():
         gs = gridspec.GridSpec(nrows=2, ncols=1, height_ratios=[1, 3])
         ax1 = plt.subplot(gs[0])
         ax2 = plt.subplot(gs[1])
-        #self.fig.canvas.mpl_connect('button_press_event', self.onClick)
 
         # create a line object with random data
         self.line, = ax1.plot(x, np.random.rand(self.CHUNK), 'g', lw=2, animated=True)
 
-        # create semilogx line for spectrum
+        # logarithmically scale spectrum axis
         self.line_fft, = ax2.plot(xf, np.random.rand(self.CHUNK), '-', lw=2, animated=True)
         ax2.set_xscale("symlog")
 
@@ -87,7 +87,7 @@ class SoundcardAnalyzer():
         ax2.set_ylim(0, 2**23)
         ax2.set_xlabel('frequency (Hz)')
         ax2.set_ylabel('energy')
-        ax2.set_xticks([j for i in [[5*10**i, 1*10**(i+1), 2*10**(i+1)] for i in range(1, 4)] for j in i])
+        ax2.set_xticks([j for i in [[5*10**i, 1*10**(i+1), 2*10**(i+1)] for i in range(1, 4)] for j in i]) # 50, 100, 200, 500, 1000, 2000....
         for axis in [ax2.xaxis, ax2.yaxis]:
             axis.set_major_formatter(ScalarFormatter())
 
@@ -208,16 +208,22 @@ class WavePlayer():
             self.load()
 
 
-if __name__ == "__main__":
-    def play_loop(): 
-        wp = WavePlayer(wave_file=sys.argv[1])
-        wp.play_loop()
+# processes
+def play_loop(): 
+    wp = WavePlayer(wave_file=sys.argv[1])
+    wp.play_loop()
 
-    def plot_loop():
-        SoundcardAnalyzer(fft_func=np.fft.fft)
+def plot_loop():
+    SoundcardAnalyzer(fft_func=np.fft.fft)
     
+if __name__ == "__main__":
+    
+
+    
+    mp.freeze_support() # windows...
     play_proc = mp.Process(target=play_loop)
     plot_proc = mp.Process(target=plot_loop)
 
     plot_proc.start()
+
     play_proc.start()
