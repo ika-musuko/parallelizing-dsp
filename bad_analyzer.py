@@ -67,16 +67,10 @@ class WaveAnalyzer:
 
     def play(self):
         # play stream (3)
-        '''
-        self.stream.start_stream()
-        while self.stream.is_active():
-            time.sleep(0.1)
-        '''
         while len(self.data) > 0:
+            print("write wave data to soundcard")
             self.stream.write(self.data)
             self.data = self.wf.readframes(self.CHUNK)
-        
-
         
     def init_plotter(self):    
         
@@ -139,6 +133,7 @@ class WaveAnalyzer:
         return self.line, self.line_fft
 
     def _animate(self, frame):
+        print("put frame on the plotter")
         data_np = np.frombuffer(self.data, dtype='Int16')
 
         #print(data_np)
@@ -163,22 +158,14 @@ class WaveAnalyzer:
         # close PyAudio (5)
         self.pa.terminate()
 
-
+    def play_loop(self):
+        while True:
+            self.play()
+            self.cleanup()
+            self.load()
+        
 
 if __name__ == "__main__":
     wa = WaveAnalyzer(wave_file=sys.argv[1], fft_func=np.fft.fft, analyze=True)
-    def play_loop():
-        while True:
-            wa.play()
-            wa.cleanup()
-            wa.load()
-
-
-    play_loop()
+    wa.play_loop()
     
-    '''
-    play_proc = mp.Process(target=play_loop)
-    plot_proc = mp.Process(target=plot_loop)
-    play_proc.start()
-    plot_proc.start()
-    '''
