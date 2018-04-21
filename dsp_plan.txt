@@ -19,8 +19,6 @@
         - increase clock speed and perform more DSP operations
         - increased data throughput
 
-- parallel DSP at the hardware level
-    - 
 
 -> study: software DSP parallelization
 - realtime signal processing
@@ -44,30 +42,12 @@
         - divide finer and finer
         - lag point later
 
-- filtering - can it be parallelized?
+- filtering
     - what is filtering
         - technically, a filter is any medium through which an audio signal passes
         - typically in audio engineering, equalizers and pass filters are used
             - analysis of a waveform done via FFT
         - can be done in hardware using special circuits or via software calculations
         - this demonstration: a software low-pass filter
-    - standard low-pass filter
-        - time to apply filter on signal sequentially
-    - parallel
+    - butterworth bandpass bandstop
 
-
-
-
-
-- time stretching - can it be parallelized?
-
-
-- echo/reverb - can it be parallelized?
-
-
-
-- compressor - can it be parallelized
-
-
-
-- conclusion
