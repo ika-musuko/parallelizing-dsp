@@ -10,3 +10,4 @@ http://www.analog.com/en/design-center/landing-pages/001/beginners-guide-to-dsp.
 https://www.ritchievink.com/blog/2017/04/23/understanding-the-fourier-transform-by-example/
 http://samcarcagno.altervista.org/blog/basic-sound-processing-python/
 http://people.csail.mit.edu/hubert/pyaudio/docs/
+https://mkonrad.net/uploads/projects/mastersthesis-mkonrad-mobile-gpgpu.pdf
