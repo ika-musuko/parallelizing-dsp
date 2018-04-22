@@ -1,16 +1,13 @@
+
 '''
 makes heavy use of https://github.com/markjay4k/Audio-Spectrum-Analyzer-in-Python/blob/master/audio_spectrum.py
 '''
 
-
+from matplotlib import gridspec
 from matplotlib.ticker import ScalarFormatter
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib import gridspec
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
-
-
 import pyaudio
 import time
 import wave
@@ -19,7 +16,6 @@ import numpy as np
 import struct
 import multiprocessing as mp
 
-FPS = 30
 
 class WaveAnalyzer:
     def __init__(self, wave_file: str, fft_func, analyze=True):
@@ -67,12 +63,21 @@ class WaveAnalyzer:
 
     def play(self):
         # play stream (3)
+        '''
+        self.stream.start_stream()
+        while self.stream.is_active():
+            time.sleep(0.1)
+        '''
         while len(self.data) > 0:
-            print("write wave data to soundcard")
+            print(len(self.data))
             self.stream.write(self.data)
+            if self.analyze:
+                self.plot()
             self.data = self.wf.readframes(self.CHUNK)
         
-    def init_plotter(self):    
+
+        
+    def init_plotter(self):
         
         # x variables for plotting
         x = np.arange(0, 2 * self.CHUNK, 2)
@@ -111,42 +116,28 @@ class WaveAnalyzer:
         ax2.set_xticks([j for i in [[5*10**i, 1*10**(i+1), 2*10**(i+1)] for i in range(1, 4)] for j in i])
         for axis in [ax2.xaxis, ax2.yaxis]:
             axis.set_major_formatter(ScalarFormatter())
-
         # show axes
         #thismanager = plt.get_current_fig_manager()
         #thismanager.window.setGeometry(5, 120, 1910, 1070)
-        
-        print("making animation")
-        ani = animation.FuncAnimation(
-                self.fig, self._animate, None,
-                init_func=self._line_init, 
-                interval=1000.0 / FPS, blit=True
-                )
-        
-        print("show")
-        plt.show()
+        plt.show(block=False)
 
-    
-    def _line_init(self):
-        self.line.set_ydata(np.zeros(self.CHUNK))
-        self.line_fft.set_ydata(np.zeros(self.CHUNK))
-        return self.line, self.line_fft
 
-    def _animate(self, frame):
-        print("put frame on the plotter")
+
+    def plot(self):
         data_np = np.frombuffer(self.data, dtype='Int16')
-
-        #print(data_np)
-        self.line.set_ydata(data_np)
-        data_np = np.frombuffer(self.data, dtype='Int16')
+        
+        print(data_np)
         self.line.set_ydata(data_np)
 
         # compute FFT and update line
+        print("draw fft")
         yf = self.fft(data_np)
-        self.line_fft.set_ydata(
-            np.abs(yf[0:self.CHUNK]))
+        self.line_fft.set_ydata(np.abs(yf[0:self.CHUNK]))
 
-        return self.line, self.line_fft
+        # update figure canvas
+        print("canvas")
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
 
 
@@ -158,14 +149,18 @@ class WaveAnalyzer:
         # close PyAudio (5)
         self.pa.terminate()
 
-    def play_loop(self):
-        while True:
-            self.play()
-            self.cleanup()
-            self.load()
-        
+
 
 if __name__ == "__main__":
     wa = WaveAnalyzer(wave_file=sys.argv[1], fft_func=np.fft.fft, analyze=True)
-    wa.play_loop()
-    
+    def play_loop():
+        while True:
+            wa.play()
+            wa.cleanup()
+            wa.load()
+
+    def plot_loop():
+        while True:
+            wa.plot()
+
+play_loop()

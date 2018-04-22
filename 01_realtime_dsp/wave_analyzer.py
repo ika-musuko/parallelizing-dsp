@@ -112,7 +112,7 @@ class SoundcardAnalyzer():
         return self.line, self.line_fft
 
     def _animate(self, frame):
-        print("put frame on the plotter")
+        #print("put frame on the plotter")
         data = self.stream.read(self.CHUNK)
         data_np = np.frombuffer(data, dtype='Int16')
 
@@ -151,7 +151,7 @@ class WavePlayer():
 
         # callback function (non blocking)
         def _pa_callback(in_data, frame_count, time_info, status):
-            print("write wave data to soundcard")
+            #print("write wave data to soundcard")
             self.data = self.wf.readframes(frame_count)
             callback_flag = pyaudio.paContinue if self.playing else pyaudio.paComplete
             signal = (self.data, callback_flag)
@@ -225,5 +225,5 @@ if __name__ == "__main__":
     plot_proc = mp.Process(target=plot_loop)
 
     plot_proc.start()
-
+    time.sleep(1)
     play_proc.start()
