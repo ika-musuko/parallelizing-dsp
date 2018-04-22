@@ -28,7 +28,7 @@ Generating Signals
     
 Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Processing
 ---------
-    If we want to analyze signals, we can use an oscilloscope and a spectrum analyzer. This demonstration is done in software although similar principles could be applied in hardware. An oscillosocope shows the waveform data of a signal with respect to time. A spectrum analyzer shows the data with respect to frequency, rather than time, using the infamous Fourier Transform. The Fourier Transform and its discrete friend the Fast Fourier Transform will be discussed in detail in the next section (in addition to parallel approaches to computing it) but for now, just know that it takes signal data represented in the time domain and transforms it into the frequency domain. That is, using a spectrum analyzer, the magnitudes of an input signal at each frequency can be viewed and analyzed.
+    If we want to analyze signals, we can use an oscilloscope and a spectrum analyzer. This demonstration is done in software although similar principles could be applied in hardware. An oscillosocope shows the waveform data of a signal with respect to time. A spectrum analyzer shows the data with respect to frequency using the infamous Fourier Transform. The Fourier Transform and its discrete friend the Fast Fourier Transform will be discussed in detail in the next section (in addition to parallel approaches to computing it) but for now, just know that it takes signal data represented in the time domain and transforms it into the frequency domain. That is, using a spectrum analyzer, the magnitudes of an input signal at each frequency can be viewed and analyzed.
     
     What if we want to analyze an audio signal stored in a wave file using a computer? One approach is to simply run the entire wave file data through an FFT algorithm and output the result.
     
@@ -39,7 +39,7 @@ Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Proces
             data_len = data.shape[0] # get the total data points and number of channels
             
             ### plot the time domain
-            time_axis = np.arange(0, data_len, 1) / sample_rate  # scale time pointsto seconds
+            time_axis = np.arange(0, data_len, 1) / sample_rate  # scale time points to seconds
             plt.subplot(2, 1, 1)
             plt.plot(time_axis, data, color='b')
             plt.xlabel("Time (sec)")
@@ -64,7 +64,10 @@ Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Proces
         
     However, for many applications a more "real time" result is desired. That is, we would like to look at the current state of the signal while it is being outputted. For example, it is quite useful to look at the state of a signal before any signal processing is done to it, in addition to looking at the result after it is processed. With audio processing, seeing what a wave looks like "right now" rather than over its entire duration is often leveraged for making processing decisions. In order to accomplish this, we must change our strategy for analysis.
     
-    Before talking about how parallel processing is utilized, it is vital to discuss the sequential flow for accomplishing this task.
+    Before talking about how parallel processing is utilized, it is vital to discuss the sequential flow for accomplishing this task. The following diagram shows this approach.
+
+            << sequential_analyzer_flow >>
+
     
     - make diagrams for program flows
     - actually discuss the problems
