@@ -1,35 +1,34 @@
-Parallelizing Digital Signal Processing
+An Introduction to Realtime Digital Signal Processing through Parallelism
 
 Abstract
 ---------
-    Classical computing systems are sequential in nature, whether it be hardware or software; that is each task is instructed in sequence, one at a time. This is due to when we construct and describe algorithms or formulas, we often think of them in this sequential fashion. However, we as we reach the end of Moore's Law, individual computing units themselves are reaching their maximum potential. The obvious solution to this is run multiple computing units in parallel to accomplish tasks. This is how the field of parallel processing was birthed. However, with this solution arises a whole new field of problems, that is, sequential algorithms must be properly restructured to work in a parallel environment.
-    One large field which has obvious benefits from utilizing parallel processing is digital signal processing. Digital signal processing is simply, taking a stream of data, performing some operations on the data, and outputting the modified data stream. Digital signal processing algorithms are computationally expensive, however they are inherently suited to task partitioning, a key indicator of whether something is parallelizable. If DSP algorithms are parallelized, this can reduce individual CPU load while getting the same results as normal sequential algorithms. 
-    This paper will talk about parallelizing DSP hardware, and selected demonstrations of how software DSP algorithms can be parallelized. The mathematics and derivations of the DSP algorithms discussed, while critical to the study of DSP overall, will only be explained in brief as the focus of this paper is how these algorithms can be parallelized and what kind of efficiency increases are gained from parallelizing them.
+    Digital Signal Processing is an ubiquitous field that can be boiled down to taking a signal, such as an audio wave, an image, or motion, applying some operation to it, and outputting the result. In software, signals are usually represented in vector-like data structures, and the operations on signals are done across the entire vector. Additionally, sometimes signal data gets inputted in real time and the current data must be analyzed at once without slowing the system down. This paper will discuss an approach to reading and processing realtime signal data using parallelism to ensure the system processes the data as it arrives.
 
 What is Digital Signal Processing?
 ---------
     Since the targeted audience of this paper is software engineers and computer programmers as opposed to electrical engineers, what digital signal processing is and some of its applications will be discussed before diving into its parallelization. As mentioned in the abstract, digital signal processing at its most basic form is taking a stream of data, modifying it in some way, and outputting the modified stream.
-    But what exactly is a signal? A signal in theoretical terms is a function which conveys information about a system. Signals exist all around us in nature. Commonly known signals are motion, sound, and images, however more esoteric signals would be biological membrane potentials or medical signals. This paper will use audio signals as a reference point since they are the easiest to conceptualize according to the author.
+    But what exactly is a signal? A signal in theoretical terms is a function which conveys information about a system. Signals exist all around us in nature. Commonly known signals are motion, sound, and images, however more specialized signals could be biological membrane potentials, seismograph data, or medical signals. This paper will use audio signals as a reference point since they are the easiest to conceptualize according to the author.
     A digital signal processor takes a digitized signal and performs various mathematical operations on the signal to modify it in some way. Signals can be digitized using an "ADC unit", an analog to digital converting unit. Output of a DSP-processed signal is done via a "DAC unit", a digital to analog converting unit.
 
 Why parallelize DSP?
 ---------
-    At its heart, DSP is essentially mathematical operations, which makes it an ideal candidate to think about how many DSP operations can be parallelized. Many common DSP operations are suited for task partitioning so they are relatively easy to parallelize in both hardware and software. A system running DSP operations in parallel can do so with a reduced clock speed, or run more DSP operations at the same clock speed as it would sequentially, resulting in increased data throughput. These days, parallel programming paradigms have been well established so it is much easier to experiment with ways to parallelize common DSP operations, which will be discussed in this paper.
-    
-    In addition to performance, different signal processing effects can be acheived whether multiple DSPs are done in series or in parallel. While the focus of the paper will be on the performance benefits of using parallel processing, a discussion about parallel processing and DSP cannot happen without talking about the effects of arranging multiple DSP units in different ways. 
+    At its heart, DSP is essentially mathematical operations, which makes it an ideal candidate to think about how many DSP operations can be parallelized. Many common DSP operations are suited for task partitioning so they are relatively easy to parallelize in both hardware and software. A system running DSP operations in parallel can do so with a reduced clock speed, or run more DSP operations at the same clock speed as it would sequentially, resulting in increased data throughput. These days, parallel programming paradigms have been well established so it is much easier to experiment with ways to parallelize common DSP operations.    
 
-Using DSP Hardware in Parallel
+Disclaimer
 ---------
-    
-Generating Signals
----------
-    Let's start with something fundamental, generating some signals. After all, how are we going to process any signals without having some signals to work with in the first place?
+    The code samples in the paper itself are pseudocode-Python or psuedocode-C, to ease explaining the actual concepts at hand. The real source code for the programs discussed are attached with the paper (also available at https://github.com/ika-musuko/parallelizing-dsp). The programming languages used are Python 3.5 and C, with additional libraries. 
 
+Fast Fourier Transform
+---------
+    One of the fundamental DSP operations is the Fourier transform, invented by Joseph Fourier. The goal of the Fourier transform is to take a signal represented in as a waveform in the time domain and translate it into the frequency domain. It does this through the following equation:
+
+    << fourier_transform >>
+
+    This equation essentially takes a signal, wraps it around circles of many sizes, and figures out how far the wrapped shape's center is from the center of the circle. This distance is how much "energy" the waveform has at a particular frequency <i>k</i>. You can go around the circle's circumference <i>k</i> times per second.
     
 Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Processing
 ---------
-    If we want to analyze signals, we can use an oscilloscope and a spectrum analyzer. This demonstration is done in software although similar principles could be applied in hardware. An oscillosocope shows the waveform data of a signal with respect to time. A spectrum analyzer shows the data with respect to frequency using the infamous Fourier Transform. The Fourier Transform and its discrete friend the Fast Fourier Transform will be discussed in detail in the next section (in addition to parallel approaches to computing it) but for now, just know that it takes signal data represented in the time domain and transforms it into the frequency domain. That is, using a spectrum analyzer, the magnitudes of an input signal at each frequency can be viewed and analyzed.
-    
+    If we want to analyze signals, we can use an oscilloscope and a spectrum analyzer. This demonstration is done in software although similar principles could be applied in hardware. An oscillosocope shows the waveform data of a signal with respect to time. We can use the Fast Fourier Transform discussed in the previous section for the spectrum analysis.
     What if we want to analyze an audio signal stored in a wave file using a computer? One approach is to simply run the entire wave file data through an FFT algorithm and output the result.
     
             ### read the wav data
@@ -70,22 +69,26 @@ Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Proces
 
     To simulate the "real-time" effect, 1024 bytes at a time of the wave data are read, played, and then subsequentially analyzed. "Playing" really means writing those 1024 bits to the machine's sound card and the machine deals with actually playing those bytes using a DAC as discussed earlier. Here is the corresponding code.
             
-          def play(self):
-            # read the first 1024 bytes of the file            
-            self.data = self.wf.readframes(self.CHUNK)
+          def play(wf: wave_file):
+            # read the first 1024 bytes of the file
+            stream = Stream()
+            plotter = Plotter()
+            data = wf.readframes(CHUNK_SIZE)
 
             # while we have not reached the end of the file
-            while len(self.data) > 0:
+            while len(data) > 0:
                 
                 # write the data to the soundcard
-                self.stream.write(self.data)
+                stream.write(data)
                 
                 # analyze the buffer and draw the graphics to the screen
                 # this function uses the FFT described earlier to do so
-                self.plot()
+                plotter.plot(data)
                 
                 # read the next 1024 bytes of wave data
-                self.data = self.wf.readframes(self.CHUNK)
+                data = wf.readframes(self.CHUNK)
+
+           Code: Playing and plotting audio in a sequential manner.
 
     However, the problem with this approach is that analyzing and displaying the wave data is a bottleneck. Since the write() and plot() functions are both blocking, each function must be thoroughly completed before the program can advance to the next instruction. In our case, the audio playback must wait for the slow plot() function to finish before continuing playback of the next chunk, causing playback to "stutter". This sounds very bad!
     
@@ -93,17 +96,61 @@ Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Proces
 
             << parallel_analyzer_flow >>
 
-    The green arrows are the steps that are done in parallel. This way, we can uncouple the audio playback and the audio analysis which should result in the audio playing smoothly. We can divide the player and plotter into separate objects so that it is easier to think about them as processes.
+    The green arrows are the steps that are done in parallel. This way, we can uncouple the audio playback and the audio analysis which should result in the audio playing smoothly. We start by dispatching the plotter function into a new process and then calling the player.
 
 
-    
+                plot_proc = mp.Process(target=start_plotter)
+                plot_proc.start()
+                play()
+
+            Code: High-level code for splitting the player and plotter into their own processes. start_plotter is a function that initializes the plotter.
     
     There are still some problems with our existing code that prevent us from smoothly parallelizing the playback and plotter. First, we must deal with removing the blocking functions and replacing them with non-blocking equivalents. Second, there has to be a way for the audio player and the plotter to share the wave data. 
-    
+    The audio and graphics libraries used (PyAudio and matplotlib) fortunately provide facilities for non-blocking I/O through asynchronous callback functions. Callback functions are passed to another function or object and is assumed to be called whenever some sort of event happens. An asynchronous callback function is done in a separate thread in parallel, which makes it non-blocking.
+    If a callback function is supplied to an audio stream, the play loop changes to roughly the following:
 
-    - make diagrams for program flows
-    - actually discuss the problems
+            def get_wave_data(wf: wave_file): 
+                # read the next set of wave data bytes
+                data = wf.readframes(CHUNK_SIZE)
+         
+                # put the wave data onto the shared queue (for the animation)
+                SHARED_DATA_QUEUE.put(data)
+
+                # the data the Stream object should deal with 
+                return data
+
+            def play(wf: wave_file):
+                stream = Stream(callback_function=get_wave_data, args=wf)
+                stream.start_stream()
+                while stream.is_active():
+                    time.sleep(0.1)
+
+            Code: Non-blocking wave playback
+       
+   Inside the start_stream() function, there is some loop that repeatedly calls the get_wave_data function. In the get_wave_data callback function, we first get thewave data and then write it to a shared data queue. This shared data queue can be thought of as a "global object" (although in practice, it is recommended to contain these functions in a structure or object so data collisions with multiple wave analyzers do not happen).
+   Following a similar convention as the audio playback above, here's what the code calling the plot roughly turns into:
+
+        def plot_callback():
+            # if there's nothing on the data queue, just make the data all 0
+            if self.data_queue.empty():
+                data = [0]*CHUNK_SIZE
+            
+            # otherwise get the data from the data_queue
+            else:
+                data = SHARED_DATA_QUEUE.get()
+            
+            # the data the Plotter object should deal with
+            return data
+
+        # initialize the plotter animation callback
+        def start_plotter():
+            plotter = Plotter(callback_function=plot_callback)
+            plotter.start_plotting()
+
+        Code: Non-blocking wave data analysis and plotting
     
+    Like the aformentioned start_stream function, the start_plotting method will repeatedly call the plot_callback function to retrieve the current wave data. 
+Note that the callback function this time reads data off of the SHARED_DATA_QUEUE rather than putting it on the queue.     
     
 Parallelizing the Fast Fourier Transform
 ---------
