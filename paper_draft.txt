@@ -87,13 +87,19 @@ Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Proces
                 # read the next 1024 bytes of wave data
                 self.data = self.wf.readframes(self.CHUNK)
 
-    However, the problem with this approach is that analyzing and displaying the wave data is a bottleneck. This results in a "stutter" effect from the audio. This sounds very bad!
+    However, the problem with this approach is that analyzing and displaying the wave data is a bottleneck. Since the write() and plot() functions are both blocking, each function must be thoroughly completed before the program can advance to the next instruction. In our case, the audio playback must wait for the slow plot() function to finish before continuing playback of the next chunk, causing playback to "stutter". This sounds very bad!
+    
     We can avoid destroying the audio playback by playing and analyzing the audio in a "pipeline" fashion. That is, while analyzing the current 1024-byte buffer, have the player write the next 1024 bytes of data to the soundcard. This is illustrated in the flowchart below.
 
             << parallel_analyzer_flow >>
 
-    The green arrows are the steps that are done in parallel. This way, we can uncouple the audio playback and the audio analysis which should result in the audio playing smoothly. 
-    This approach is easier said than done, as writing to the soundcard is a blocking function. Our 
+    The green arrows are the steps that are done in parallel. This way, we can uncouple the audio playback and the audio analysis which should result in the audio playing smoothly. We can divide the player and plotter into separate objects so that it is easier to think about them as processes.
+
+
+    
+    
+    There are still some problems with our existing code that prevent us from smoothly parallelizing the playback and plotter. First, we must deal with removing the blocking functions and replacing them with non-blocking equivalents. Second, there has to be a way for the audio player and the plotter to share the wave data. 
+    
 
     - make diagrams for program flows
     - actually discuss the problems

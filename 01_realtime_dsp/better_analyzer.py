@@ -19,12 +19,14 @@ import multiprocessing as mp
 
 FPS = 30
 
-DATA_QUEUE = mp.Queue()
 
-class SoundcardAnalyzer():
-    def __init__(self, fft_func):
-        # fft function to be used
-        self.fft = fft_func
+class WaveAnalyzer():
+    def __init__(self, wave_file: str, fft_func): 
+        
+        self.data_queue = mp.Queue()
+        
+        # status
+        self.playing = False
 
         # settings
         self.CHUNK = 1024
@@ -32,10 +34,15 @@ class SoundcardAnalyzer():
         self.CHANNELS = 1
         self.RATE = 44100
 
-        # plotter
-        self.init_plotter()
 
-    def init_plotter(self):
+        # fft function to be used
+        self.fft = fft_func
+        self.wave_filename = wave_file
+        self.load()
+        
+
+
+    def start_plotter(self):
         '''
             initialize the plotter
         '''
@@ -76,11 +83,10 @@ class SoundcardAnalyzer():
             axis.set_major_formatter(ScalarFormatter())
 
         def plot(frame=None):
-            global DATA_QUEUE
-            if DATA_QUEUE.empty():
+            if self.data_queue.empty():
                 data = bytes(2048)
             else:
-                data = DATA_QUEUE.get()
+                data = self.data_queue.get()
 
             data_np = np.frombuffer(data, dtype='Int16') 
             self.line.set_ydata(data_np)
@@ -99,24 +105,6 @@ class SoundcardAnalyzer():
         plt.show()
 
     
-
-
-class WavePlayer():
-    def __init__(self, wave_file: str):
-       
-        # status
-        self.playing = False
-
-        # settings
-        self.CHUNK = 1024
-        self.FORMAT = pyaudio.paInt16
-        self.CHANNELS = 1
-        self.RATE = 44100
-        
-        # load wave
-        self.wave_filename = wave_file
-        self.load()
-
     def load(self):
         print("load")
         self.wf = wave.open(self.wave_filename, 'rb')
@@ -126,12 +114,11 @@ class WavePlayer():
 
         # callback function (non blocking)
         def _pa_callback(in_data, frame_count, time_info, status):
-            global DATA_QUEUE
             #print("write wave data to soundcard")
             self.data = self.wf.readframes(frame_count)
             callback_flag = pyaudio.paContinue if self.playing else pyaudio.paComplete
             signal = (self.data, callback_flag)
-            DATA_QUEUE.put(self.data)
+            self.data_queue.put(self.data)
             return signal
         
         # open stream (2)
@@ -187,17 +174,14 @@ class WavePlayer():
 
 
 # processes
-def play_loop(): 
-    wp = WavePlayer(wave_file=sys.argv[1])
-    wp.play_loop()
+def plot_func(wa: WaveAnalyzer):
+    wa.start_plotter()
 
-def plot_loop():
-    SoundcardAnalyzer(fft_func=np.fft.fft)
-    
 if __name__ == "__main__":
     
     mp.freeze_support() # windows...
-    plot_proc = mp.Process(target=plot_loop)
+    wa = WaveAnalyzer(wave_file=sys.argv[1], fft_func=np.fft.fft)
+    plot_proc = mp.Process(target=plot_func, args=(wa, ))
     plot_proc.start()
     time.sleep(2)
-    play_loop()
+    wa.play_loop()
