@@ -25,7 +25,8 @@ Fast Fourier Transform
     << fourier_transform >>
 
     This equation essentially takes a signal, wraps it around circles of many sizes, and figures out how far the wrapped shape's center is from the center of the circle. This distance is how much "energy" the waveform has at a particular frequency <i>k</i>. You can go around the circle's circumference <i>k</i> times per second.
-    
+    Now obviously, integrals cannot be easily evaluated by a computer; they are not discrete! 
+
 Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Processing
 ---------
     If we want to analyze signals, we can use an oscilloscope and a spectrum analyzer. This demonstration is done in software although similar principles could be applied in hardware. An oscillosocope shows the waveform data of a signal with respect to time. We can use the Fast Fourier Transform discussed in the previous section for the spectrum analysis.
@@ -152,13 +153,9 @@ Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Proces
     Like the aformentioned start_stream function, the start_plotting method will repeatedly call the plot_callback function to retrieve the current wave data. 
 Note that the callback function this time reads data off of the SHARED_DATA_QUEUE rather than putting it on the queue.     
     
-Parallelizing the Fast Fourier Transform
----------
-
-
-The Butterworth Filters: Band Pass and Band Stop
-----------
-
 
 Conclusion
+----------
+
+What to do next from here
 ----------
