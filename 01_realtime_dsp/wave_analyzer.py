@@ -8,9 +8,6 @@ from matplotlib.ticker import ScalarFormatter
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import gridspec
-from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
-
 
 import pyaudio
 import time
@@ -22,30 +19,18 @@ import multiprocessing as mp
 
 FPS = 30
 
+DATA_QUEUE = mp.Queue()
+
 class SoundcardAnalyzer():
-    '''
-    epic hack where i record the output from the computer's audio card instead of from the wave file LOL
-    '''
     def __init__(self, fft_func):
         # fft function to be used
         self.fft = fft_func
 
         # settings
-        self.CHUNK = 1024 * 2
+        self.CHUNK = 1024
         self.FORMAT = pyaudio.paInt16
         self.CHANNELS = 1
         self.RATE = 44100
-
-        # get soundcard
-        self.pa = pyaudio.PyAudio()
-        self.stream = self.pa.open(
-                  format=self.FORMAT
-                , channels=self.CHANNELS
-                , rate=self.RATE
-                , input=True
-                , output=True
-                , frames_per_buffer=self.CHUNK
-                )
 
         # plotter
         self.init_plotter()
@@ -55,7 +40,7 @@ class SoundcardAnalyzer():
             initialize the plotter
         '''
         # x variables for plotting
-        x = np.arange(0, 2 * self.CHUNK, 2)
+        x = np.arange(0, self.CHUNK * 2, 2)
         xf = np.linspace(0, self.RATE, self.CHUNK)
 
         # create matplotlib figure and axes
@@ -75,12 +60,11 @@ class SoundcardAnalyzer():
         ax1.set_xlabel('samples')
         ax1.set_ylabel('volume')
         ax1.set_ylim(-2**15, 2**15)
-        ax1.set_xlim(20, 2 * self.CHUNK)
+        ax1.set_xlim(0, self.CHUNK)
         plt.setp(
             ax1, yticks=[-2**15, 0 , 2**15],
-            xticks=[0, self.CHUNK, 2 * self.CHUNK],
+            xticks=[0, self.CHUNK],
         )
-        plt.setp(ax2, yticks=[0, 2**23],)
 
         # format spectrum axes
         ax2.set_xlim(40, 2 * self.CHUNK)
@@ -91,40 +75,30 @@ class SoundcardAnalyzer():
         for axis in [ax2.xaxis, ax2.yaxis]:
             axis.set_major_formatter(ScalarFormatter())
 
-        # show axes
-        #thismanager = plt.get_current_fig_manager()
-        #thismanager.window.setGeometry(5, 120, 1910, 1070)
-        
-        print("making animation")
+        def plot(frame=None):
+            global DATA_QUEUE
+            if DATA_QUEUE.empty():
+                data = bytes(2048)
+            else:
+                data = DATA_QUEUE.get()
+
+            data_np = np.frombuffer(data, dtype='Int16') 
+            self.line.set_ydata(data_np)
+
+            # compute fft and update line
+            yf = self.fft(data_np)
+            self.line_fft.set_ydata(np.abs(yf[0:self.CHUNK]))
+            return self.line, self.line_fft
+
         ani = animation.FuncAnimation(
-                self.fig, self._animate, None,
-                init_func=self._line_init, 
+                self.fig, plot, None,
+                init_func=plot, 
                 interval=1000.0 / FPS, blit=True
                 )
         
-        print("show")
         plt.show()
 
     
-    def _line_init(self):
-        self.line.set_ydata(np.zeros(self.CHUNK))
-        self.line_fft.set_ydata(np.zeros(self.CHUNK))
-        return self.line, self.line_fft
-
-    def _animate(self, frame):
-        #print("put frame on the plotter")
-        data = self.stream.read(self.CHUNK)
-        data_np = np.frombuffer(data, dtype='Int16')
-
-        print(np.min(data_np), np.max(data_np))
-        #print(data_np)
-        self.line.set_ydata(data_np)
-
-        # compute FFT and update line
-        yf = self.fft(data_np)
-        self.line_fft.set_ydata(np.abs(yf[0:self.CHUNK]))
-
-        return self.line, self.line_fft
 
 
 class WavePlayer():
@@ -152,11 +126,12 @@ class WavePlayer():
 
         # callback function (non blocking)
         def _pa_callback(in_data, frame_count, time_info, status):
+            global DATA_QUEUE
             #print("write wave data to soundcard")
             self.data = self.wf.readframes(frame_count)
             callback_flag = pyaudio.paContinue if self.playing else pyaudio.paComplete
             signal = (self.data, callback_flag)
-            #print(signal)
+            DATA_QUEUE.put(self.data)
             return signal
         
         # open stream (2)
@@ -222,9 +197,7 @@ def plot_loop():
 if __name__ == "__main__":
     
     mp.freeze_support() # windows...
-    play_proc = mp.Process(target=play_loop)
     plot_proc = mp.Process(target=plot_loop)
-
     plot_proc.start()
-    time.sleep(1)
-    play_proc.start()
+    time.sleep(2)
+    play_loop()

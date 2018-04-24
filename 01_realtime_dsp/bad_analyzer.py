@@ -2,6 +2,8 @@
 '''
 makes heavy use of https://github.com/markjay4k/Audio-Spectrum-Analyzer-in-Python/blob/master/audio_spectrum.py
 '''
+import matplotlib
+matplotlib.use("Qt5Agg")
 
 from matplotlib import gridspec
 from matplotlib.ticker import ScalarFormatter
@@ -147,16 +149,13 @@ class WaveAnalyzer:
 
 
 
+    def play_loop(self):
+        while True:
+            self.play()
+            self.cleanup()
+            self.load()
+
+
 if __name__ == "__main__":
     wa = WaveAnalyzer(wave_file=sys.argv[1], fft_func=np.fft.fft, analyze=True)
-    def play_loop():
-        while True:
-            wa.play()
-            wa.cleanup()
-            wa.load()
-
-    def plot_loop():
-        while True:
-            wa.plot()
-
-play_loop()
+    wa.play_loop()
