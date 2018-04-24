@@ -23,6 +23,7 @@ FPS = 30
 class WaveAnalyzer():
     def __init__(self, wave_file: str, fft_func): 
         
+        # the shared data queue between the player and the plotter
         self.data_queue = mp.Queue()
         
         # status
@@ -83,10 +84,23 @@ class WaveAnalyzer():
             axis.set_major_formatter(ScalarFormatter())
 
         def plot(frame=None):
+            '''
+            callback function for matplotlib's animation
+            '''
+            # if there's nothing on the data queue, just make the data all 0
             if self.data_queue.empty():
-                data = bytes(2048)
+                data = bytes(self.CHUNK * 2)
+            
+            # otherwise seek to the latest data on the data queue
             else:
                 data = self.data_queue.get()
+                while self.data_queue.qsize() > 2: # don't empty the whole queue so the plotter still has data to get just in case...
+                    data = self.data_queue.get()
+                # if the data isn't the same size as the chunk size, extend the data buffer size out to the chunk size
+                if len(data) != self.CHUNK * 2:
+                    data_array = bytearray(data)
+                    data_array.extend(bytes(self.CHUNK * 2 - len(data)))
+                    data = bytes(data_array)
 
             data_np = np.frombuffer(data, dtype='Int16') 
             self.line.set_ydata(data_np)
@@ -96,8 +110,11 @@ class WaveAnalyzer():
             self.line_fft.set_ydata(np.abs(yf[0:self.CHUNK]))
             return self.line, self.line_fft
 
+        # initialize the plotter animation callback
         ani = animation.FuncAnimation(
-                self.fig, plot, None,
+                fig=self.fig, 
+                func=plot, 
+                frames=None,
                 init_func=plot, 
                 interval=1000.0 / FPS, blit=True
                 )
@@ -112,13 +129,19 @@ class WaveAnalyzer():
         # instantiate PyAudio (1)
         self.pa = pyaudio.PyAudio()
 
-        # callback function (non blocking)
+        # callback function for the audio playback(non blocking)
         def _pa_callback(in_data, frame_count, time_info, status):
-            #print("write wave data to soundcard")
+            # read the next set of wave data bytes
             self.data = self.wf.readframes(frame_count)
+
+            # set the playback state
             callback_flag = pyaudio.paContinue if self.playing else pyaudio.paComplete
-            signal = (self.data, callback_flag)
+            
+            # put the wave data onto the shared queue (for the animation)
             self.data_queue.put(self.data)
+
+            # the data the callback creator should deal with 
+            signal = (self.data, callback_flag)
             return signal
         
         # open stream (2)
@@ -171,17 +194,18 @@ class WaveAnalyzer():
             self.play()
             self.stop()
             self.load()
-
+ 
+    def start_analyzer(self):
+        plot_proc = mp.Process(target=self.start_plotter)
+        plot_proc.start()
+        time.sleep(2)
+        self.play_loop()
 
 # processes
 def plot_func(wa: WaveAnalyzer):
     wa.start_plotter()
 
 if __name__ == "__main__":
-    
     mp.freeze_support() # windows...
     wa = WaveAnalyzer(wave_file=sys.argv[1], fft_func=np.fft.fft)
-    plot_proc = mp.Process(target=plot_func, args=(wa, ))
-    plot_proc.start()
-    time.sleep(2)
-    wa.play_loop()
+    wa.start_analyzer()

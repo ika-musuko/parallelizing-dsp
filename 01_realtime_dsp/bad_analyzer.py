@@ -155,7 +155,9 @@ class WaveAnalyzer:
             self.cleanup()
             self.load()
 
+    def start_analyzer(self):
+        self.play_loop()
 
 if __name__ == "__main__":
     wa = WaveAnalyzer(wave_file=sys.argv[1], fft_func=np.fft.fft, analyze=True)
-    wa.play_loop()
+    wa.start_analyzer()
