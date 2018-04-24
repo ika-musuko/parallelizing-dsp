@@ -201,10 +201,6 @@ class WaveAnalyzer():
         time.sleep(2)
         self.play_loop()
 
-# processes
-def plot_func(wa: WaveAnalyzer):
-    wa.start_plotter()
-
 if __name__ == "__main__":
     mp.freeze_support() # windows...
     wa = WaveAnalyzer(wave_file=sys.argv[1], fft_func=np.fft.fft)
