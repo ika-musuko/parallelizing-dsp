@@ -68,7 +68,12 @@ Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Proces
 
             << sequential_analyzer_flow >>
 
-    
+    To simulate the "real-time" effect, 1024 bytes at a time of the wave data are read, played, and then subsequentially analyzed. "Playing" really means writing those 1024 bits to the machine's sound card and the machine deals with actually playing those bytes using a DAC as discussed earlier.
+    However, the problem with this approach is that analyzing and displaying the wave data is a bottleneck. This results in a "stutter" effect from the audio. This sounds very bad!
+    We can avoid destroying the audio playback by playing and analyzing the audio in a "pipeline" fashion. That is, while analyzing the current 1024-byte buffer, have the player write the next 1024 bytes of data to the soundcard. This is illustrated in the flowchart below.
+
+            << parallel_analyzer_flow >>
+
     - make diagrams for program flows
     - actually discuss the problems
     

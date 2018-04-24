@@ -11,3 +11,5 @@ https://www.ritchievink.com/blog/2017/04/23/understanding-the-fourier-transform-
 http://samcarcagno.altervista.org/blog/basic-sound-processing-python/
 http://people.csail.mit.edu/hubert/pyaudio/docs/
 https://mkonrad.net/uploads/projects/mastersthesis-mkonrad-mobile-gpgpu.pdf
+https://eklitzke.org/blocking-io-nonblocking-io-and-epoll
+https://github.com/mojofunk/portaudio/blob/master/src/hostapi/alsa/pa_linux_alsa.c

@@ -91,17 +91,17 @@ class WaveAnalyzer:
         #self.fig.canvas.mpl_connect('button_press_event', self.onClick)
 
         # create a line object with random data
-        self.line, = ax1.plot(x, np.random.rand(self.CHUNK), 'g', lw=2, animated=True)
+        self.line, = ax1.plot(x, np.random.rand(self.CHUNK), 'g', lw=2)
 
         # create semilogx line for spectrum
-        self.line_fft, = ax2.plot(xf, np.random.rand(self.CHUNK), '-', lw=2, animated=True)
+        self.line_fft, = ax2.plot(xf, np.random.rand(self.CHUNK), '-', lw=2)
         ax2.set_xscale("symlog")
 
         # format waveform axes
         ax1.set_xlabel('samples')
         ax1.set_ylabel('volume')
         ax1.set_ylim(-2**15, 2**15)
-        ax1.set_xlim(20, 2 * self.CHUNK)
+        ax1.set_xlim(0, self.CHUNK)
         plt.setp(
             ax1, yticks=[-2**15, 0 , 2**15],
             xticks=[0, self.CHUNK, 2 * self.CHUNK],
@@ -116,26 +116,22 @@ class WaveAnalyzer:
         ax2.set_xticks([j for i in [[5*10**i, 1*10**(i+1), 2*10**(i+1)] for i in range(1, 4)] for j in i])
         for axis in [ax2.xaxis, ax2.yaxis]:
             axis.set_major_formatter(ScalarFormatter())
-        # show axes
-        #thismanager = plt.get_current_fig_manager()
-        #thismanager.window.setGeometry(5, 120, 1910, 1070)
+        
+        # show the plotter
         plt.show(block=False)
 
 
 
     def plot(self):
         data_np = np.frombuffer(self.data, dtype='Int16')
-        
-        print(data_np)
         self.line.set_ydata(data_np)
 
         # compute FFT and update line
-        print("draw fft")
         yf = self.fft(data_np)
         self.line_fft.set_ydata(np.abs(yf[0:self.CHUNK]))
 
         # update figure canvas
-        print("canvas")
+        #print("canvas")
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 

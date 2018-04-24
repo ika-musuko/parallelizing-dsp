@@ -116,6 +116,7 @@ class SoundcardAnalyzer():
         data = self.stream.read(self.CHUNK)
         data_np = np.frombuffer(data, dtype='Int16')
 
+        print(np.min(data_np), np.max(data_np))
         #print(data_np)
         self.line.set_ydata(data_np)
 
