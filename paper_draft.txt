@@ -153,7 +153,15 @@ Making a WAVE file Spectrum Analyzer and making it Realtime with Parallel Proces
     Like the aformentioned start_stream function, the start_plotting method will repeatedly call the plot_callback function to retrieve the current wave data. 
 Note that the callback function this time reads data off of the SHARED_DATA_QUEUE rather than putting it on the queue.     
     
-
+    mutex = Lock()
+    # stream: a nonblocking I/O "stream"
+    def start_stream(stream, callback_func, args):
+        mutex.acquire() # P(MUTEX)
+        p = Process(target = callback_func, args = args)
+        p.start()
+        mutex.release() # V(MUTEX)
+    
+    
 Conclusion
 ----------
 
