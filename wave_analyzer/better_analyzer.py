@@ -8,7 +8,6 @@ from matplotlib.ticker import ScalarFormatter
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import gridspec
-
 import pyaudio
 import time
 import wave

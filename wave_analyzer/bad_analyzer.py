@@ -3,13 +3,9 @@
 makes heavy use of https://github.com/markjay4k/Audio-Spectrum-Analyzer-in-Python/blob/master/audio_spectrum.py
 '''
 import matplotlib
-matplotlib.use("Qt5Agg")
-
 from matplotlib import gridspec
 from matplotlib.ticker import ScalarFormatter
 import matplotlib.pyplot as plt
-from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
 import pyaudio
 import time
 import wave
